@@ -6,6 +6,7 @@
 # "inspired by this article: 
 #    http://moritzmolch.com/932
 #    And by the addon Quick_Tagging by Cayenne Boyer Copyright 2012"
+# also contains code from anki's aqt/browser.py which is Copyright: Damien Elmes
 
 # use this at your own-risk
 
@@ -27,6 +28,7 @@ load_config(mw.addonManager.getConfig(__name__))
 mw.addonManager.setConfigUpdatedAction(__name__,load_config) 
 
 
+#adjusted from end of method setDeck from aqt/browser.py
 def move_cards_to_different_deck(ids, did):
     mod = intTime()
     usn = mw.col.sched.col.usn()
@@ -46,7 +48,6 @@ def just_add_tags():
         note.flush()
     else:
         tooltip('error in config')
-
 
 
 def add_tags_and_move():
