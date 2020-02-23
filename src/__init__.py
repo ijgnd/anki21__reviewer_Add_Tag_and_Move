@@ -8,24 +8,24 @@
 #    And by the addon Quick_Tagging by Cayenne Boyer Copyright 2012"
 # also contains code from anki's aqt/browser.py which is Copyright: Damien Elmes
 
-# use this at your own-risk
+# use this at your own risk!
 
 
+from anki.hooks import wrap
+from anki.lang import _
+from anki.utils import intTime, ids2str
 from aqt import mw
 from aqt.reviewer import Reviewer
-from anki.hooks import wrap
 from aqt.utils import getTag, tooltip
-from anki.utils import intTime, ids2str
 
 from anki.hooks import addHook
 
 
-
-def load_config(c):
-    global config
-    config = c
-load_config(mw.addonManager.getConfig(__name__))
-mw.addonManager.setConfigUpdatedAction(__name__,load_config) 
+def gc(arg, fail=False):
+    conf = mw.addonManager.getConfig(__name__)
+    if conf:
+        return conf.get(arg, fail)
+    return fail
 
 
 #adjusted from end of method setDeck from aqt/browser.py
@@ -41,7 +41,7 @@ def move_cards_to_different_deck(ids, did):
 
 def just_add_tags():
     note = mw.reviewer.card.note()
-    tags = config.get("Just_add_tag__tags",0)
+    tags = gc("Just_add_tag__tags")
     if tags:
         note.addTag(tags)
         tooltip('Added tag "%s"' % tags)
@@ -52,14 +52,14 @@ def just_add_tags():
 
 def add_tags_and_move():
     note = mw.reviewer.card.note()
-    tags = config.get("add_tags_and_change_deck__tags",0)
+    tags = gc("add_tags_and_change_deck__tags")
     if tags:
         note.addTag(tags)
         note.flush()
         mw.checkpoint(_("Change Deck"))
-        did = mw.col.decks.id(config.get("add_tags_and_change_deck__newdeck",0))
+        did = mw.col.decks.id(gc("add_tags_and_change_deck__newdeck"))
         if did:
-            move_cards_to_different_deck([mw.reviewer.card.id],did)
+            move_cards_to_different_deck([mw.reviewer.card.id], did)
             tooltip('Added tag "%s" and moved' % tags)
         else:
             tooltip('invalid setting: deck does not exist')
@@ -69,9 +69,8 @@ def add_tags_and_move():
 
 
 def just_change_Deck():
-    note = mw.reviewer.card.note()
     mw.checkpoint(_("Change Deck"))
-    deckname = config.get("just_change_deck__newdeck",0)
+    deckname = gc("just_change_deck__newdeck", 0)
     if deckname:
         did = mw.col.decks.id(deckname)
         move_cards_to_different_deck([mw.reviewer.card.id],did)
@@ -89,14 +88,17 @@ def show_tag_dialog():
     note.flush()
 
 
-
-
 def addShortcuts21(shortcuts):
-    additions = (
-        (config.get("Just_add_tag__hotkey","7"), just_add_tags),
-        (config.get("","8"), add_tags_and_move),
-        (config.get("just_change_deck__hotkey","9"), just_change_Deck),
-        (config.get("Add_tags_dialog__hotkey","0"), show_tag_dialog),
-    )
-    shortcuts += additions
+    a = gc("Just_add_tag__hotkey")
+    if a:
+        shortcuts.append((a, just_add_tags))
+    b = gc("add_tags_and_change_deck__hotkey")
+    if b:
+        shortcuts.append((b, add_tags_and_move))
+    c = gc("just_change_deck__hotkey")
+    if c:
+        shortcuts.append((c, just_change_Deck))
+    d = gc("Add_tags_dialog__hotkey")
+    if d:
+        shortcuts.append((d, show_tag_dialog))
 addHook("reviewStateShortcuts", addShortcuts21)
